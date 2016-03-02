@@ -6,8 +6,9 @@
 //
 
 import Vapor
+import VaporConsole
 
-public class Provider: Vapor.Provider {
+public class Provider: Vapor.Provider, ConsoleProvider {
 
 	public static func boot(application: Application) {
 		let controller = Controller()
@@ -18,6 +19,8 @@ public class Provider: Vapor.Provider {
 		application.get("assets/:type/:a/:b/:c/:d", handler: controller.compile)
 		application.get("assets/:type/:a/:b/:c/:d/:e", handler: controller.compile)
 	}
+
+	public static func boot(console: Console) {
 
 	}
 
