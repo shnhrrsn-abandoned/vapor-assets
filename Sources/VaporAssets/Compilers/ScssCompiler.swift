@@ -8,7 +8,6 @@
 import Foundation
 
 public class ScssCompiler: TaskCompiler {
-	private let fileManager = NSFileManager.defaultManager()
 
 	public override func getCompilationTask(path: String, context: AnyObject? = nil) -> NSTask {
 		let minify = context as? String ?? (self.shouldMinify ? "compressed" : "nested")

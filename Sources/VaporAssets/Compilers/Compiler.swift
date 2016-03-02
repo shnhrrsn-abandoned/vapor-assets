@@ -5,8 +5,12 @@
 //  Created by Shaun Harrison on 2/22/16.
 //
 
+import Foundation
+
 public class Compiler {
 	public internal(set) var shouldMinify: Bool
+
+	internal let fileManager = NSFileManager.defaultManager()
 
 	public required init(shouldMinify: Bool) {
 		self.shouldMinify = shouldMinify
@@ -17,7 +21,15 @@ public class Compiler {
 	}
 
 	public func getLastModified(path: String, newest: Double = 0.0) -> Double {
-		fatalError("Subclasses must implement \(#function)")
+		guard self.fileManager.fileExistsAtPath(path) else {
+			return newest
+		}
+
+		guard let date = (try? self.fileManager.attributesOfItemAtPath(path)[NSFileModificationDate]) as? NSDate else {
+			return newest
+		}
+
+		return max(newest, date.timeIntervalSinceReferenceDate)
 	}
 
 	public var mime: String {
