@@ -21,7 +21,7 @@ public class Provider: Vapor.Provider, ConsoleProvider {
 	}
 
 	public static func boot(console: Console) {
-
+		console.registerCommand(InstallToolchainCommand)
 	}
 
 }
