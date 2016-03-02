@@ -35,8 +35,8 @@ public class Asset {
 		}
 	}
 
-	public func compile(context: AnyObject? = nil) -> String? {
-		return self.compiler.compile(self.path, context: context)
+	public func compile(context: AnyObject? = nil) throws -> String? {
+		return try self.compiler.compile(self.path, context: context)
 	}
 
 	public func getLastModified(newest: Double = 0.0) -> Double {

@@ -9,15 +9,15 @@ import Foundation
 
 public class TaskCompiler: Compiler {
 
-	public override func compile(path: String, context: AnyObject? = nil) -> String? {
-		return self.compileTask(self.getCompilationTask(path, context: context), path: path);
+	public override func compile(path: String, context: AnyObject? = nil) throws -> String? {
+		return try self.compileTask(self.getCompilationTask(path, context: context), path: path);
 	}
 
 	public func getCompilationTask(path: String, context: AnyObject? = nil) -> NSTask {
 		fatalError("Subclasses must implement \(#function)")
 	}
 
-	public func compileTask(task: NSTask, path: String) -> String? {
+	public func compileTask(task: NSTask, path: String) throws -> String? {
 		let pipe = NSPipe()
 		let errorPipe = NSPipe()
 		task.standardOutput = pipe
@@ -29,8 +29,11 @@ public class TaskCompiler: Compiler {
 		let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
 
 		if task.terminationStatus != 0 {
-			let errorString = String(data: errorData, encoding: NSUTF8StringEncoding)
-			fatalError("TODO: \(errorString)")
+			if let message = String(data: errorData, encoding: NSUTF8StringEncoding) {
+				throw CompilationError.Error(message: message)
+			} else {
+				throw CompilationError.UnknownError
+			}
 		}
 
 		return String(data: data, encoding: NSUTF8StringEncoding)

@@ -55,5 +55,4 @@ public class ScssCompiler: TaskCompiler {
 		return "css"
 	}
 
-
 }

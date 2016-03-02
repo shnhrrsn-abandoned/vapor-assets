@@ -31,7 +31,17 @@ class Controller: Vapor.Controller {
 			return try! String(contentsOfFile: info.path)
 		}
 
-		return asset.compile() ?? "Could not compile"
+		do {
+			if let compiled = try asset.compile() {
+				return Response(status: .OK, data: compiled.utf8, contentType: .Other(asset.mime))
+			} else {
+				throw CompilationError.UnknownError
+			}
+		} catch CompilationError.Error(let message) {
+			return Response(status: .Error, text: message)
+		} catch {
+			return Response(status: .Error, text: "\(error)")
+		}
 	}
 
 	private func info(request: Request) -> RequestInfo {

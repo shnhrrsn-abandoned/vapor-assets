@@ -12,7 +12,7 @@ public class Compiler {
 		self.shouldMinify = shouldMinify
 	}
 
-	public func compile(path: String, context: AnyObject? = nil) -> String? {
+	public func compile(path: String, context: AnyObject? = nil) throws -> String? {
 		fatalError("Subclasses must implement \(#function)")
 	}
 
