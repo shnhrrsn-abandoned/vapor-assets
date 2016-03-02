@@ -12,6 +12,8 @@ private typealias RequestInfo = (path: String, fileExtension: String)
 
 class Controller: Vapor.Controller {
 
+	required init() { }
+
 	func compile(request: Request) -> ResponseConvertible {
 		let info = self.info(request)
 
