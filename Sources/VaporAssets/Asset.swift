@@ -20,6 +20,7 @@ public class Asset {
 		"scss": ScssCompiler(shouldMinify: false),
 		"coffee": CoffeeScriptCompiler(shouldMinify: false),
 		"js": JavascriptCompiler(shouldMinify: false),
+		"css": CssCompiler(shouldMinify: false),
 	]
 
 	public let shouldMinify: Bool
