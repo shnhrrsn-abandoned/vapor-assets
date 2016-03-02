@@ -19,6 +19,7 @@ public class Asset {
 	public static var compilers: [String: Compiler] = [
 		"scss": ScssCompiler(shouldMinify: false),
 		"coffee": CoffeeScriptCompiler(shouldMinify: false),
+		"js": JavascriptCompiler(shouldMinify: false),
 	]
 
 	public let shouldMinify: Bool
