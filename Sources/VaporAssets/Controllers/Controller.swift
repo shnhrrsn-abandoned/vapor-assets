@@ -7,6 +7,7 @@
 
 import Vapor
 import Foundation
+import CoreFoundation
 
 private typealias RequestInfo = (path: String, fileExtension: String)
 
@@ -32,15 +33,15 @@ class Controller: Vapor.Controller {
 			return try! String(contentsOfFile: info.path)
 		}
 
-		let cacheKey = info.path + String(lastModified)
+		let cacheKey = (info.path + String(lastModified)).bridgedObject
 		let response: Response
 
-		if let contents = self.cache.objectForKey(cacheKey) as? String {
-			response = Response(status: .OK, data: contents.utf8, contentType: .Other(asset.mime))
+		if let contents = self.cache.objectForKey(cacheKey) as? NSString {
+			response = Response(status: .OK, data: String(contents).utf8, contentType: .Other(asset.mime))
 		} else {
 			do {
 				if let compiled = try asset.compile() {
-					self.cache.setObject(compiled, forKey: cacheKey)
+					self.cache.setObject(compiled.bridgedObject, forKey: cacheKey)
 					response = Response(status: .OK, data: compiled.utf8, contentType: .Other(asset.mime))
 				} else {
 					throw CompilationError.UnknownError

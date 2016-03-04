@@ -30,7 +30,7 @@ public class TaskCompiler: Compiler {
 
 		task.launch()
 
-		if let input = input?.dataUsingEncoding(NSUTF8StringEncoding), handle = task.standardInput?.fileHandleForWriting {
+		if let input = input?.dataUsingEncoding(NSUTF8StringEncoding), handle = (task.standardInput as? NSPipe)?.fileHandleForWriting {
 			handle.writeData(input)
 			handle.closeFile()
 		}

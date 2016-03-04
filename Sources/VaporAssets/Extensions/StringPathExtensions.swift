@@ -10,27 +10,35 @@ import Foundation
 extension String {
 
 	internal var lastPathComponent: String {
-		return (self as NSString).lastPathComponent
+		return self.bridgedObject.lastPathComponent
 	}
 
 	internal var pathComponents: [String] {
-		return (self as NSString).pathComponents
+		return self.bridgedObject.pathComponents
 	}
 
 	internal var stringByDeletingPathExtension: String {
-		return (self as NSString).stringByDeletingPathExtension
+		return self.bridgedObject.stringByDeletingPathExtension
 	}
 
 	internal var stringByDeletingLastPathComponent: String {
-		return (self as NSString).stringByDeletingLastPathComponent
+		return self.bridgedObject.stringByDeletingLastPathComponent
 	}
 
 	internal func stringByAppendingPathComponent(str: String) -> String {
-		return (self as NSString).stringByAppendingPathComponent(str)
+		return self.bridgedObject.stringByAppendingPathComponent(str)
 	}
 
 	internal var pathExtension: String {
-		return (self as NSString).pathExtension
+		return self.bridgedObject.pathExtension
+	}
+
+	internal var bridgedObject: NSString {
+		#if os(Linux)
+			return self._bridgeToObject()
+		#else
+			return self as NSString
+		#endif
 	}
 
 }
