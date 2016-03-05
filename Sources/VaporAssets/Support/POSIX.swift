@@ -100,15 +100,18 @@ internal class POSIX {
 		}
 	}
 
-	internal class func popen(arguments: [String], redirectStandardError: Bool = false, environment: [String: String] = [:], body: String -> Void) throws -> Int {
+	internal class func popen(arguments: [String], environment: [String: String] = [:], standardError: (String -> Void)? = nil, standardOutput: String -> Void) throws -> Int {
 		do {
 			// Create a pipe to use for reading the result.
-			var pipe: [Int32] = [0, 0, 0]
+			var pipe: [Int32] = [0, 0]
+			var errorPipe: [Int32] = [0, 0]
 
 			#if os(Linux)
 				var rv = Glibc.pipe(&pipe)
+				Glibc.pipe(&errorPipe)
 			#else
 				var rv = Darwin.pipe(&pipe)
+				Darwin.pipe(&errorPipe)
 			#endif
 
 			guard rv == 0 else {
@@ -122,15 +125,17 @@ internal class POSIX {
 			// Open /dev/null as stdin.
 			posix_spawn_file_actions_addopen(&fileActions, 0, "/dev/null", O_RDONLY, 0)
 
-			// Open the write end of the pipe as stdout (and stderr, if desired).
+			// Open the write end of the pipe as stdout.
 			posix_spawn_file_actions_adddup2(&fileActions, pipe[1], 1)
-			if redirectStandardError {
-				posix_spawn_file_actions_adddup2(&fileActions, pipe[1], 2)
-			}
+
+			// Open the write end of the error pipe as stderr.
+			posix_spawn_file_actions_adddup2(&fileActions, errorPipe[1], 2)
 
 			// Close the other ends of the pipe.
 			posix_spawn_file_actions_addclose(&fileActions, pipe[0])
 			posix_spawn_file_actions_addclose(&fileActions, pipe[1])
+			posix_spawn_file_actions_addclose(&fileActions, errorPipe[0])
+			posix_spawn_file_actions_addclose(&fileActions, errorPipe[1])
 
 			// Launch the command.
 			let pid = try spawnp(arguments[0], args: arguments, environment: environment, fileActions: fileActions)
@@ -143,6 +148,9 @@ internal class POSIX {
 			guard rv == 0 else {
 				throw SystemError.close(rv)
 			}
+
+			// Close the write end of the error pipe.
+			close(errorPipe[1])
 
 			// Read all of the data from the output pipe.
 			let N = 4096
@@ -162,15 +170,37 @@ internal class POSIX {
 				default:
 					buf[n] = 0 // must null terminate
 					if let str = String.fromCString(buf) {
-						body(str)
+						standardOutput(str)
 					} else {
 						throw SystemError.popen(EILSEQ, arguments[0])
 					}
 				}
 			}
 
+			if let standardError = standardError {
+				loop: while true {
+					let n = read(errorPipe[0], &buf, N)
+					switch n {
+					case  -1:
+						if errno == EINTR {
+							continue  // try again!
+						}
+					case 0:
+						break loop
+					default:
+						buf[n] = 0 // must null terminate
+						if let str = String.fromCString(buf) {
+							standardError(str)
+						}
+					}
+				}
+			}
+
 			// Close the read end of the output pipe.
 			close(pipe[0])
+
+			// Close the read end of the error pipe.
+			close(errorPipe[0])
 
 			// Wait for the command to exit.
 			return Int(try wait(pid))
