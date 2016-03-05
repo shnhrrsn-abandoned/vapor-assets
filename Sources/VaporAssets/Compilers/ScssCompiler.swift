@@ -31,7 +31,7 @@ public class ScssCompiler: TaskCompiler {
 
 		var newest = max(newest, date.timeIntervalSinceReferenceDate)
 
-		if let contents = try? String(contentsOfFile: path) {
+		if let contents = String.fromContentsOfFile(path) {
 			var startIndex = contents.startIndex
 			let trimCharacterSet = NSCharacterSet.whitespaceAndNewlineCharacterSet().mutableCopy() as! NSMutableCharacterSet
 			trimCharacterSet.addCharactersInString("'\"()")

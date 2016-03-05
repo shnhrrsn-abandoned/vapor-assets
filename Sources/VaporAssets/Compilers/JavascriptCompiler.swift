@@ -11,7 +11,7 @@ public class JavascriptCompiler: TaskCompiler {
 
 	public override func compile(path: String, context: AnyObject? = nil) throws -> String? {
 		if !self.shouldMinify {
-			return try String(contentsOfFile: path, encoding: NSUTF8StringEncoding)
+			return String.fromContentsOfFile(path, encoding: NSUTF8StringEncoding)
 		} else {
 			return try super.compile(path, context: context)
 		}

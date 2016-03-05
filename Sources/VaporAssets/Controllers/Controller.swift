@@ -30,7 +30,7 @@ class Controller: Vapor.Controller {
 		let lastModified = lastModified ?? CFAbsoluteTimeGetCurrent()
 
 		guard let asset = asset else {
-			return try! String(contentsOfFile: info.path)
+			return String.fromContentsOfFile(info.path) ?? ""
 		}
 
 		let cacheKey = (info.path + String(lastModified)).bridgedObject
