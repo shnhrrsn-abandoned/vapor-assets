@@ -8,16 +8,25 @@
 import Foundation
 
 public class ScssCompiler: TaskCompiler {
+	public var includePaths = Array<String>()
 
 	public override func getCompilationTask(path: String, context: AnyObject? = nil) -> Task {
 		let minify = context as? String ?? (self.shouldMinify ? "compressed" : "nested")
 
-		return Task(launchPath: "/usr/bin/env", arguments: [
+		var arguments = [
 			"node-sass",
 			"--output-style", minify,
-			"--precision=14",
-			path
-		])
+			"--precision=14"
+		]
+
+		for path in self.includePaths {
+			arguments.append("--include-path")
+			arguments.append(path)
+		}
+
+		arguments.append(path)
+
+		return Task(launchPath: "/usr/bin/env", arguments: arguments)
 	}
 
 	public override func getLastModified(path: String, newest: Double = 0.0) -> Double {
