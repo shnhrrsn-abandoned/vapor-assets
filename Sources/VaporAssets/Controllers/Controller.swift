@@ -16,6 +16,53 @@ class Controller: Vapor.Controller {
 
 	required init() { }
 
+	func img(request: Request) -> ResponseConvertible {
+		let info = self.info(request)
+
+		let contentType: String
+
+		switch info.fileExtension {
+			case "svg":
+				contentType = "image/svg+xml"
+			case "eot":
+				contentType = "application/vnd.ms-fontobject"
+			case "woff":
+				contentType = "application/x-font-woff"
+			case "otf":
+				contentType = "font/opentype"
+			case "ttf":
+				fallthrough
+			default:
+				contentType = "application/x-font-ttf"
+		}
+
+		return self.process(info, contentType: contentType)
+	}
+
+	func font(request: Request) -> ResponseConvertible {
+		let info = self.info(request)
+
+		let contentType: String
+
+		switch info.fileExtension {
+			case "svg":
+				contentType = "image/svg+xml"
+			case "png":
+				contentType = "image/png"
+			case "gif":
+				contentType = "image/gif"
+			case "ico":
+				contentType = "image/x-icon"
+				break
+			case "jpeg", "jpg":
+				fallthrough
+			default:
+				contentType = "image/jpeg"
+		}
+
+		return self.process(info, contentType: contentType)
+	}
+
 	func compile(request: Request) -> ResponseConvertible {
 		let info = self.info(request)
 
@@ -30,7 +77,12 @@ class Controller: Vapor.Controller {
 		let lastModified = lastModified ?? CFAbsoluteTimeGetCurrent()
 
 		guard let asset = asset else {
-			return String.fromContentsOfFile(info.path) ?? ""
+			if let data = NSData(contentsOfFile: info.path) {
+				let bytes = UnsafeBufferPointer<UInt8>(start: UnsafePointer<UInt8>(data.bytes), count: data.length)
+				return Response(status: .OK, data: bytes, contentType: .Other(contentType))
+			} else {
+				return Response(status: .NotFound, text: "Not found")
+			}
 		}
 
 		let cacheKey = (info.path + String(lastModified)).bridgedObject
