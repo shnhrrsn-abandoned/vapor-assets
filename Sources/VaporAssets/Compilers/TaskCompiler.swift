@@ -13,40 +13,33 @@ public class TaskCompiler: Compiler {
 		return try self.compileTask(self.getCompilationTask(path, context: context), path: path)
 	}
 
-	public func getCompilationTask(path: String, context: AnyObject? = nil) -> NSTask {
+	public func getCompilationTask(path: String, context: AnyObject? = nil) -> Task {
 		fatalError("Subclasses must implement \(#function)")
 	}
 
-	public func compileTask(task: NSTask, path: String, input: String? = nil) throws -> String? {
-		let pipe = NSPipe()
-		let errorPipe = NSPipe()
+	public func compileTask(task: Task, path: String) throws -> String? {
+		var output: String?
+		var error: String?
 
-		task.standardOutput = pipe
-		task.standardError = errorPipe
-
-		if input != nil {
-			task.standardInput = NSPipe()
+		task.standardOutputHandler = {
+			output = $0
 		}
 
-		task.launch()
-
-		if let input = input?.dataUsingEncoding(NSUTF8StringEncoding), handle = (task.standardInput as? NSPipe)?.fileHandleForWriting {
-			handle.writeData(input)
-			handle.closeFile()
+		task.standardErrorHandler = {
+			error = $0
 		}
 
-		let data = pipe.fileHandleForReading.readDataToEndOfFile()
-		let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+		try task.run()
 
 		if task.terminationStatus != 0 {
-			if let message = String(data: errorData, encoding: NSUTF8StringEncoding) {
+			if let message = error {
 				throw CompilationError.Error(message: message)
 			} else {
 				throw CompilationError.UnknownError
 			}
 		}
 
-		return String(data: data, encoding: NSUTF8StringEncoding)
+		return output
 	}
 
 }

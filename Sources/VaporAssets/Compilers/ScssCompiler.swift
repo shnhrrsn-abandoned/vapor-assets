@@ -9,19 +9,15 @@ import Foundation
 
 public class ScssCompiler: TaskCompiler {
 
-	public override func getCompilationTask(path: String, context: AnyObject? = nil) -> NSTask {
+	public override func getCompilationTask(path: String, context: AnyObject? = nil) -> Task {
 		let minify = context as? String ?? (self.shouldMinify ? "compressed" : "nested")
 
-		let task = NSTask()
-		task.launchPath = "/usr/bin/env"
-		task.arguments = [
+		return Task(launchPath: "/usr/bin/env", arguments: [
 			"node-sass",
 			"--output-style", minify,
 			"--precision=14",
 			path
-		]
-
-		return task
+		])
 	}
 
 	public override func getLastModified(path: String, newest: Double = 0.0) -> Double {

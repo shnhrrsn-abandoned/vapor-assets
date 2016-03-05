@@ -10,30 +10,36 @@ import Foundation
 public class CoffeeScriptCompiler: TaskCompiler {
 
 	public override func compile(path: String, context: AnyObject? = nil) throws -> String? {
-		let coffee = NSTask()
-		coffee.launchPath = "/usr/bin/env"
-		coffee.arguments = [
+		let coffee = Task(launchPath: "/usr/bin/env", arguments: [
 			"coffee",
-			"-c",
-			"-p",
+			"--compile",
+			"--print",
 			path
-		]
+		])
 
-		let value = try self.compileTask(coffee, path: path)
+		guard let value = try self.compileTask(coffee, path: path) else {
+			return nil
+		}
 
-		guard let compiled = value where self.shouldMinify else {
+		if !self.shouldMinify {
 			return value
 		}
 
-		let minify = NSTask()
-		minify.launchPath = "/usr/bin/env"
-		minify.arguments = [
+		let tempFile = NSTemporaryDirectory().stringByAppendingPathComponent("assets-\(NSUUID().UUIDString).js")
+		try value.writeToFile(tempFile, atomically: false, encoding: NSUTF8StringEncoding)
+
+		defer {
+			let _ = try? NSFileManager.defaultManager().removeItemAtPath(tempFile)
+		}
+
+		let minify = Task(launchPath: "/usr/bin/env", arguments: [
 			"uglifyjs",
 			"--compress",
-			"drop_console=true"
-		]
+			"drop_console=true",
+			tempFile
+		])
 
-		return try self.compileTask(minify, path: path, input: compiled)
+		return try self.compileTask(minify, path: path)
 	}
 
 	public override var mime: String {

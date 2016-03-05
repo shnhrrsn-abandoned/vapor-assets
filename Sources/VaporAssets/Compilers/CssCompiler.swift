@@ -10,19 +10,18 @@ import Foundation
 public class CssCompiler: TaskCompiler {
 
 	public override func compile(path: String, context: AnyObject? = nil) throws -> String? {
-		let contents = try String(contentsOfFile: path, encoding: NSUTF8StringEncoding)
-
-		guard self.shouldMinify else {
-			return contents
+		if !self.shouldMinify {
+			return try String(contentsOfFile: path, encoding: NSUTF8StringEncoding)
+		} else {
+			return try super.compile(path, context: context)
 		}
+	}
 
-		let minify = NSTask()
-		minify.launchPath = "/usr/bin/env"
-		minify.arguments = [
-			"cleancss"
-		]
-
-		return try self.compileTask(minify, path: path, input: contents)
+	public override func getCompilationTask(path: String, context: AnyObject? = nil) -> Task {
+		return Task(launchPath: "/usr/bin/env", arguments: [
+			"cleancss",
+			path
+		])
 	}
 
 	public override var mime: String {
