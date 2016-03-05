@@ -29,7 +29,6 @@ internal class POSIX {
 	}
 
 	internal enum Error: ErrorType {
-		case ExitStatus(Int32, [String])
 		case ExitSignal
 	}
 
@@ -101,7 +100,7 @@ internal class POSIX {
 		}
 	}
 
-	internal class func popen(arguments: [String], redirectStandardError: Bool = false, environment: [String: String] = [:], body: String -> Void) throws {
+	internal class func popen(arguments: [String], redirectStandardError: Bool = false, environment: [String: String] = [:], body: String -> Void) throws -> Int {
 		do {
 			// Create a pipe to use for reading the result.
 			var pipe: [Int32] = [0, 0, 0]
@@ -174,12 +173,7 @@ internal class POSIX {
 			close(pipe[0])
 
 			// Wait for the command to exit.
-			let exitStatus = try POSIX.waitpid(pid)
-
-			guard exitStatus == 0 else {
-				throw Error.ExitStatus(exitStatus, arguments)
-			}
-
+			return Int(try wait(pid))
 		} catch let underlyingError as SystemError {
 			throw ShellError.popen(arguments: arguments, underlyingError)
 		}
