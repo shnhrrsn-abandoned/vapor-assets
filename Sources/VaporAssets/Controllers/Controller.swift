@@ -78,8 +78,7 @@ class Controller: Vapor.Controller {
 
 		guard let asset = asset else {
 			if let data = NSData(contentsOfFile: info.path) {
-				let bytes = UnsafeBufferPointer<UInt8>(start: UnsafePointer<UInt8>(data.bytes), count: data.length)
-				return Response(status: .OK, data: bytes, contentType: .Other(contentType))
+				return Response(status: .OK, data: data, contentType: .Other(contentType))
 			} else {
 				return Response(status: .NotFound, text: "Not found")
 			}
