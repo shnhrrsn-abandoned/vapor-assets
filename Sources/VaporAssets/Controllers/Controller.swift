@@ -11,10 +11,8 @@ import CoreFoundation
 
 private typealias RequestInfo = (path: String, fileExtension: String)
 
-class Controller: Vapor.Controller {
+class Controller {
 	private let cache = NSCache()
-
-	required init() { }
 
 	func img(request: Request) -> ResponseConvertible {
 		let info = self.info(request)
@@ -78,7 +76,8 @@ class Controller: Vapor.Controller {
 
 		guard let asset = asset else {
 			if let data = NSData(contentsOfFile: info.path) {
-				return Response(status: .OK, data: data, contentType: .Other(contentType))
+				let bytes = UnsafeBufferPointer<UInt8>(start: UnsafePointer<UInt8>(data.bytes), count: data.length)
+				return Response(status: .OK, data: bytes, contentType: .Other(contentType))
 			} else {
 				return Response(status: .NotFound, text: "Not found")
 			}
