@@ -21,11 +21,11 @@ public class Compiler {
 	}
 
 	public func getLastModified(path: String, newest: Double = 0.0) -> Double {
-		guard self.fileManager.fileExistsAtPath(path) else {
+		guard self.fileManager.fileExists(atPath: path) else {
 			return newest
 		}
 
-		guard let date = (try? self.fileManager.attributesOfItemAtPath(path)[NSFileModificationDate]) as? NSDate else {
+		guard let date = (try? self.fileManager.attributesOfItem(atPath: path)[NSFileModificationDate]) as? NSDate else {
 			return newest
 		}
 

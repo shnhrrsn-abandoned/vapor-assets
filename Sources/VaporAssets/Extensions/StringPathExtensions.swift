@@ -27,15 +27,15 @@ extension String {
 	}
 
 	internal var stringByDeletingPathExtension: String {
-		return self.bridgedObject.stringByDeletingPathExtension
+		return self.bridgedObject.deletingPathExtension
 	}
 
 	internal var stringByDeletingLastPathComponent: String {
-		return self.bridgedObject.stringByDeletingLastPathComponent
+		return self.bridgedObject.deletingLastPathComponent
 	}
 
 	internal func stringByAppendingPathComponent(str: String) -> String {
-		return self.bridgedObject.stringByAppendingPathComponent(str)
+		return self.bridgedObject.appendingPathComponent(str)
 	}
 
 	internal var pathExtension: String {

@@ -11,10 +11,15 @@ import CoreFoundation
 
 private typealias RequestInfo = (path: String, fileExtension: String)
 
-class Controller {
+class Controller: ApplicationInitializable {
+	private let app: Application
 	private let cache = NSCache()
 
-	func img(request: Request) -> ResponseConvertible {
+	required init(application: Application) {
+		self.app = application
+	}
+
+	func img(request: Request) -> ResponseRepresentable {
 		let info = self.info(request)
 
 		let contentType: String
@@ -37,7 +42,7 @@ class Controller {
 		return self.process(info, contentType: contentType)
 	}
 
-	func font(request: Request) -> ResponseConvertible {
+	func font(request: Request) -> ResponseRepresentable {
 		let info = self.info(request)
 
 		let contentType: String
@@ -61,45 +66,49 @@ class Controller {
 		return self.process(info, contentType: contentType)
 	}
 
-	func compile(request: Request) -> ResponseConvertible {
+	func compile(request: Request) -> ResponseRepresentable {
 		let info = self.info(request)
 
 		guard let asset = Asset(path: info.path) else {
-			return Response(status: .Error, text: "Unsupported asset")
+			return Response(status: .badRequest, text: "Unsupported asset")
 		}
 
 		return self.process(info, contentType: asset.mime, asset: asset, lastModified: asset.getLastModified())
 	}
 
-	private func process(info: RequestInfo, contentType: String, asset: Asset? = nil, lastModified: Double? = nil) -> ResponseConvertible {
+	private func process(info: RequestInfo, contentType: String, asset: Asset? = nil, lastModified: Double? = nil) -> ResponseRepresentable {
 		let lastModified = lastModified ?? CFAbsoluteTimeGetCurrent()
 
 		guard let asset = asset else {
 			if let data = NSData(contentsOfFile: info.path) {
 				let bytes = UnsafeBufferPointer<UInt8>(start: UnsafePointer<UInt8>(data.bytes), count: data.length)
-				return Response(status: .OK, data: bytes, contentType: .Other(contentType))
+				var response = Response(status: .ok, data: Data(bytes))
+				response.headers["Content-Type"] = Response.Headers.Value(contentType)
+				return response
 			} else {
-				return Response(status: .NotFound, text: "Not found")
+				return Response(status: .notFound, text: "Not found")
 			}
 		}
 
 		let cacheKey = (info.path + String(lastModified)).bridgedObject
-		let response: Response
+		var response: Response
 
-		if let contents = self.cache.objectForKey(cacheKey) as? NSString {
-			response = Response(status: .OK, data: String(contents).utf8, contentType: .Other(asset.mime))
+		if let contents = self.cache.object(forKey: cacheKey) as? NSString {
+			response = Response(status: .ok, data: Data(String(contents).utf8))
+			response.headers["Content-Type"] = Response.Headers.Value(asset.mime)
 		} else {
 			do {
 				if let compiled = try asset.compile() {
 					self.cache.setObject(compiled.bridgedObject, forKey: cacheKey)
-					response = Response(status: .OK, data: compiled.utf8, contentType: .Other(asset.mime))
+					response = Response(status: .ok, data: Data(compiled.utf8))
+					response.headers["Content-Type"] = Response.Headers.Value(asset.mime)
 				} else {
 					throw CompilationError.UnknownError
 				}
 			} catch CompilationError.Error(let message) {
-				return Response(status: .Error, text: message)
+				return Response(status: .badRequest, text: message)
 			} catch {
-				return Response(status: .Error, text: "\(error)")
+				return Response(status: .badRequest, text: "\(error)")
 			}
 		}
 
@@ -109,7 +118,7 @@ class Controller {
 	}
 
 	private func info(request: Request) -> RequestInfo {
-		let path = Application.workDir + "Resources" + request.path
+		let path = self.app.workDir + "Resources" + request.uri.path!
 		let fileExtension = NSURL(fileURLWithPath: path).pathExtension ?? ""
 		return (path, fileExtension)
 	}

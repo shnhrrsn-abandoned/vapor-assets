@@ -19,7 +19,7 @@
 
 internal class POSIX {
 
-	internal enum SystemError: ErrorType {
+	internal enum SystemError: ErrorProtocol {
 		case close(Int32)
 		case pipe(Int32)
 		case popen(Int32, String)
@@ -28,18 +28,18 @@ internal class POSIX {
 		case waitpid(Int32)
 	}
 
-	internal enum Error: ErrorType {
+	internal enum Error: ErrorProtocol {
 		case ExitSignal
 	}
 
-	internal enum ShellError: ErrorType {
+	internal enum ShellError: ErrorProtocol {
 		case system(arguments: [String], SystemError)
 		case popen(arguments: [String], SystemError)
 	}
 
 	internal class func env(key: String) -> String? {
 		let out = getenv(key)
-		return out == nil ? nil : String.fromCString(out)  //FIXME locale may not be UTF8
+		return out == nil ? nil : String(validatingUTF8: out)  //FIXME locale may not be UTF8
 	}
 
 	private class func spawnp(path: String, args: [String], environment: [String: String] = [:], fileActions: posix_spawn_file_actions_t? = nil) throws -> pid_t {
@@ -119,7 +119,7 @@ internal class POSIX {
 			}
 
 			// Create the file actions to use for spawning.
-			var fileActions = posix_spawn_file_actions_t()
+			var fileActions = posix_spawn_file_actions_t(nil)
 			posix_spawn_file_actions_init(&fileActions)
 
 			// Open /dev/null as stdin.
@@ -154,7 +154,7 @@ internal class POSIX {
 
 			// Read all of the data from the output pipe.
 			let N = 4096
-			var buf = [Int8](count: N + 1, repeatedValue: 0)
+			var buf = [Int8](repeating: 0, count: N + 1)
 
 			loop: while true {
 				let n = read(pipe[0], &buf, N)
@@ -169,7 +169,7 @@ internal class POSIX {
 					break loop
 				default:
 					buf[n] = 0 // must null terminate
-					if let str = String.fromCString(buf) {
+					if let str = String(validatingUTF8: buf) {
 						standardOutput(str)
 					} else {
 						throw SystemError.popen(EILSEQ, arguments[0])
@@ -189,7 +189,7 @@ internal class POSIX {
 						break loop
 					default:
 						buf[n] = 0 // must null terminate
-						if let str = String.fromCString(buf) {
+						if let str = String(validatingUTF8: buf) {
 							standardError(str)
 						}
 					}

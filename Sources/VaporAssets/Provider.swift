@@ -10,8 +10,8 @@ import VaporConsole
 
 public class Provider: Vapor.Provider, ConsoleProvider {
 
-	public static func boot(application: Application) {
-		let controller = Controller()
+	public func boot(application: Application) {
+		let controller = Controller(application: application)
 
 		application.get("assets/img/:a", handler: controller.img)
 		application.get("assets/img/:a/:b", handler: controller.img)

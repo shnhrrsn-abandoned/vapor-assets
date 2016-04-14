@@ -25,11 +25,11 @@ public class CoffeeScriptCompiler: TaskCompiler {
 			return value
 		}
 
-		let tempFile = NSTemporaryDirectory().stringByAppendingPathComponent("assets-\(NSUUID().UUIDString).js")
-		try value.writeToFile(tempFile, atomically: false, encoding: NSUTF8StringEncoding)
+		let tempFile = NSTemporaryDirectory().stringByAppendingPathComponent("assets-\(NSUUID().uuidString).js")
+		try value.write(toFile: tempFile, atomically: false, encoding: NSUTF8StringEncoding)
 
 		defer {
-			let _ = try? NSFileManager.defaultManager().removeItemAtPath(tempFile)
+			let _ = try? NSFileManager.defaultManager().removeItem(atPath: tempFile)
 		}
 
 		let minify = Task(launchPath: "/usr/bin/env", arguments: [

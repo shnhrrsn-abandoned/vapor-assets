@@ -30,11 +30,11 @@ public class ScssCompiler: TaskCompiler {
 	}
 
 	public override func getLastModified(path: String, newest: Double = 0.0) -> Double {
-		guard self.fileManager.fileExistsAtPath(path) else {
+		guard self.fileManager.fileExists(atPath: path) else {
 			return newest
 		}
 
-		guard let date = (try? self.fileManager.attributesOfItemAtPath(path)[NSFileModificationDate]) as? NSDate else {
+		guard let date = (try? self.fileManager.attributesOfItem(atPath: path)[NSFileModificationDate]) as? NSDate else {
 			return newest
 		}
 
@@ -42,30 +42,30 @@ public class ScssCompiler: TaskCompiler {
 
 		if let contents = String.fromContentsOfFile(path) {
 			var startIndex = contents.startIndex
-			let trimCharacterSet = NSCharacterSet.whitespaceAndNewlineCharacterSet().mutableCopy() as! NSMutableCharacterSet
-			trimCharacterSet.addCharactersInString("'\"()")
+			let trimCharacterSet = NSCharacterSet.whitespaceAndNewline().mutableCopy() as! NSMutableCharacterSet
+			trimCharacterSet.addCharacters(in: "'\"()")
 
 			let directory = path.stringByDeletingLastPathComponent
 
-			while let importRange = contents.rangeOfString("@import", range: Range(start: startIndex, end: contents.endIndex)), endRange = contents.rangeOfString(";", range: Range(start: importRange.endIndex, end: contents.endIndex)) {
-				let importName = contents.substringWithRange(Range(start: importRange.endIndex, end: endRange.startIndex)).stringByTrimmingCharactersInSet(trimCharacterSet)
+			while let importRange = contents.range(of: "@import", range: startIndex..<contents.endIndex), endRange = contents.range(of: ";", range: importRange.endIndex..<contents.endIndex) {
+				let importName = contents.substring(with: importRange.endIndex..<endRange.startIndex).trimmingCharacters(in: trimCharacterSet)
 				let importPath = directory.stringByAppendingPathComponent(importName)
 				let importExtension = importPath.pathExtension
 
 				if importExtension != "scss" && importExtension != "sass" {
 					let partialPath: String
 
-					if importName.rangeOfString("/") != nil {
+					if importName.range(of: "/") != nil {
 						partialPath = directory.stringByAppendingPathComponent(importName.stringByDeletingLastPathComponent).stringByAppendingPathComponent("_\(importName.lastPathComponent)")
 					} else {
 						partialPath = directory.stringByAppendingPathComponent("_\(importName.lastPathComponent)")
 					}
 
-					if self.fileManager.fileExistsAtPath("\(importPath).scss") {
+					if self.fileManager.fileExists(atPath: "\(importPath).scss") {
 						newest = self.getLastModified("\(importPath).scss", newest: newest)
-					} else if self.fileManager.fileExistsAtPath("\(partialPath).scss") {
+					} else if self.fileManager.fileExists(atPath: "\(partialPath).scss") {
 						newest = self.getLastModified("\(partialPath).scss", newest: newest)
-					} else if self.fileManager.fileExistsAtPath("\(importPath).sass") {
+					} else if self.fileManager.fileExists(atPath: "\(importPath).sass") {
 						newest = self.getLastModified("\(importPath).sass", newest: newest)
 					}
 				} else {

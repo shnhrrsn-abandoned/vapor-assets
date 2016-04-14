@@ -59,7 +59,7 @@ public class Asset {
 	}
 
 	public class func getCompilerFromPath(path: String) -> Compiler? {
-		let pathExtension = path.pathExtension.lowercaseString
+		let pathExtension = path.pathExtension.lowercased()
 
 		for (key, compiler) in self.compilers {
 			if pathExtension == key {
@@ -71,7 +71,7 @@ public class Asset {
 	}
 
 	public class func isPathSupported(path: String) -> Bool {
-		let pathExtension = path.pathExtension.lowercaseString
+		let pathExtension = path.pathExtension.lowercased()
 
 		for (key, _) in self.compilers {
 			if pathExtension == key {
